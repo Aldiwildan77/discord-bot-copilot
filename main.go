@@ -22,10 +22,11 @@ var prefix string = "!c"
 // set map for store command and function
 var commandMap = map[string]func(*discordgo.Session, *discordgo.MessageCreate){
 	"ping":       ping,
-	"setPrefix":  setPrefix,
+	"prefix":     setPrefix,
 	"join":       joinVoice,
 	"disconnect": disconnect,
 	"avatar":     displayAvatar,
+	"help":       help,
 }
 
 // create discordgo session and connect to discord
@@ -139,10 +140,17 @@ func ping(s *discordgo.Session, m *discordgo.MessageCreate) {
 func setPrefix(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// split message into array
 	message := strings.Split(m.Content, " ")
-	// set prefix
-	prefix = message[1]
-	// reply with prefix
-	s.ChannelMessageSend(m.ChannelID, "prefix is now "+prefix)
+	// check if message length is 2
+	if len(message) > 2 {
+		// set prefix variable with value from array
+		prefix = message[2]
+
+		// reply with prefix
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("prefix set to **%s**", prefix))
+	} else {
+		// reply with current prefix
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("prefix is **%s**", prefix))
+	}
 }
 
 // create joinVoice command
@@ -200,4 +208,30 @@ func displayAvatar(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// send message to channel
 	s.ChannelMessageSend(m.ChannelID, user.AvatarURL(""))
+}
+
+// create help function to display help message as embed
+func help(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// create embed
+	embed := &discordgo.MessageEmbed{
+		Title: "Copilot Help",
+		Color: 0x00ff00,
+		Fields: []*discordgo.MessageEmbedField{
+			// create utility command help
+			{
+				Name:   "Utility Commands",
+				Value:  "`ping`, `prefix`, `avatar`",
+				Inline: false,
+			},
+			// create voice command help
+			{
+				Name:   "Voice Commands",
+				Value:  "`join`, `disconnect`",
+				Inline: false,
+			},
+		},
+	}
+
+	// send embed to channel
+	s.ChannelMessageSendEmbed(m.ChannelID, embed)
 }
